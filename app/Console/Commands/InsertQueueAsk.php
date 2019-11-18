@@ -13,6 +13,10 @@ class InsertQueueAsk extends Command
 {
     protected $num = 0;
 
+    protected $startNum;
+
+    protected $endNum;
+
     protected $date;
 
     protected $time;
@@ -50,18 +54,35 @@ class InsertQueueAsk extends Command
         // $this->date = date("Y-m-d");
         // $this->time = date("H:i", mktime(date('H'), date('i') - 1));
 
-        if (!$this->date && !$this->time) {
-            $this->date = $this->ask('請輸入查詢日期');
-            if(!preg_match("/^20[0-9]{2}\-[0-9]{2}-[0-9]{2}/", $this->date)) {
-                echo "日期格式錯誤,請重新輸入 \n";
+        if (!$this->startNum && !$this->endNum && !$this->date && !$this->time) {
+            $this->startNum = $this->ask('請輸入查詢初始筆數 (最小值0)');
+            if(!preg_grep("/^0|[1-9]0000$/", $this->startNum)){
+                echo "資料格式錯誤,請重新輸入 \n";
+                $this->startNum = $this->ask('請輸入查詢初始筆數');
+            }
+
+            $this->endNum = $this->ask('請輸入查詢最終筆數 (最大值90000)');
+            if(!preg_grep("/^0|[1-9]0000$/", $this->endNum)){
+                echo "資料格式錯誤,請重新輸入 \n";
+                $this->endNum = $this->ask('請輸入查詢初始筆數');
+            }
+
+            $this->date = $this->ask('請輸入查詢日期 (例：YYYY-MM-DD)');
+            if(!preg_match("/^20[0-9]{2}\-[0-9]{2}-[0-9]{2}$/", $this->date)) {
+                echo "日期輸入錯誤,請重新輸入 \n";
                 $this->date = $this->ask('請輸入查詢日期');
             }
 
-            $this->time = $this->ask('請輸入查詢時間');
-            if(!preg_match("/^[0-9]{2}\:[0-9]{2}/", $this->time)) {
-                echo "時間格式錯誤,請重新輸入 \n";
+            $this->time = $this->ask('請輸入查詢時間 (例：00:00)');
+            if(!preg_match("/^[0-9]{2}\:[0-9]{2}$/", $this->time)) {
+                echo "時間輸入錯誤,請重新輸入 \n";
                 $this->time = $this->ask('請輸入查詢時間');
             }
+        }
+
+        // $url = """http://train.rd6/?start={$this->date}T{$this->time}:00&end={$this->date}T{$this->time}:59&from={$this->num}";
+        for($this->num = $this->startNum; $this->num < $this->endNum; $this->num += 10000) {
+            insertqueueJob::dispatch("http://train.rd6/?start={$this->date}T{$this->time}:00&end={$this->date}T{$this->time}:59&from={$this->num}");
         }
 
         $curl = new Curl();
